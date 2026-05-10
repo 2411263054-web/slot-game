@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>老虎机小游戏</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <main class="game-layout">
+      <section class="machine-panel">
+        <div class="machine-top">
+          <h1>老虎机小游戏</h1>
+          <p class="subtitle">即开即玩</p>
+        </div>
+
+        <div class="stats-grid" aria-label="当前游戏信息">
+          <article class="stat-card">
+            <span class="stat-label">当前积分</span>
+            <strong class="stat-value" id="balance">50</strong>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">当前下注积分</span>
+            <strong class="stat-value" id="current-bet">10</strong>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">旋转次数</span>
+            <strong class="stat-value" id="spin-count">0</strong>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">中奖次数</span>
+            <strong class="stat-value" id="win-count">0</strong>
+          </article>
+        </div>
+
+        <div class="machine-body">
+          <div class="reels-frame" aria-label="老虎机转轮">
+            <div class="reel-window">
+              <div class="reel-viewport">
+                <div class="reel-strip" id="reel-0"></div>
+              </div>
+            </div>
+            <div class="reel-window">
+              <div class="reel-viewport">
+                <div class="reel-strip" id="reel-1"></div>
+              </div>
+            </div>
+            <div class="reel-window">
+              <div class="reel-viewport">
+                <div class="reel-strip" id="reel-2"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="controls-panel">
+          <div class="bet-controls" role="group" aria-label="选择下注积分">
+            <button type="button" class="bet-button is-active" data-bet="10">下注 10 积分</button>
+            <button type="button" class="bet-button" data-bet="100">下注 100 积分</button>
+          </div>
+
+          <div class="action-controls">
+            <button type="button" class="action-button spin-button" id="spin-button">开始旋转</button>
+            <button type="button" class="action-button reset-button" id="reset-button">重新开始</button>
+          </div>
+        </div>
+
+        <p class="status-banner" id="status-message" aria-live="polite">
+          选择下注积分后点击“开始旋转”开始游戏。
+        </p>
+      </section>
+
+      <aside class="info-panel">
+        <section class="info-card">
+          <h2>中奖规则</h2>
+          <div class="paytable-grid">
+            <div class="paytable-row">
+              <div class="combo-icons" aria-label="一个A图标">
+                <span class="combo-slot"><img src="./image/a.png" alt="A 图标"></span>
+                <span class="combo-slot placeholder" aria-hidden="true"></span>
+                <span class="combo-slot placeholder" aria-hidden="true"></span>
+              </div>
+              <span class="pay-multiplier">下注积分 x2</span>
+            </div>
+            <div class="paytable-row">
+              <div class="combo-icons" aria-label="两个A图标">
+                <span class="combo-slot"><img src="./image/a.png" alt="A 图标"></span>
+                <span class="combo-slot"><img src="./image/a.png" alt="A 图标"></span>
+                <span class="combo-slot placeholder" aria-hidden="true"></span>
+              </div>
+              <span class="pay-multiplier">下注积分 x3</span>
+            </div>
+            <div class="paytable-row">
+              <div class="combo-icons" aria-label="三个B图标">
+                <span class="combo-slot"><img src="./image/b.png" alt="B 图标"></span>
+                <span class="combo-slot"><img src="./image/b.png" alt="B 图标"></span>
+                <span class="combo-slot"><img src="./image/b.png" alt="B 图标"></span>
+              </div>
+              <span class="pay-multiplier">下注积分 x5</span>
+            </div>
+            <div class="paytable-row">
+              <div class="combo-icons" aria-label="三个C图标">
+                <span class="combo-slot"><img src="./image/c.png" alt="C 图标"></span>
+                <span class="combo-slot"><img src="./image/c.png" alt="C 图标"></span>
+                <span class="combo-slot"><img src="./image/c.png" alt="C 图标"></span>
+              </div>
+              <span class="pay-multiplier">下注积分 x30</span>
+            </div>
+            <div class="paytable-row">
+              <div class="combo-icons" aria-label="三个D图标">
+                <span class="combo-slot"><img src="./image/d.png" alt="D 图标"></span>
+                <span class="combo-slot"><img src="./image/d.png" alt="D 图标"></span>
+                <span class="combo-slot"><img src="./image/d.png" alt="D 图标"></span>
+              </div>
+              <span class="pay-multiplier">下注积分 x80</span>
+            </div>
+            <div class="paytable-row">
+              <div class="combo-icons" aria-label="三个E图标">
+                <span class="combo-slot"><img src="./image/e.png" alt="E 图标"></span>
+                <span class="combo-slot"><img src="./image/e.png" alt="E 图标"></span>
+                <span class="combo-slot"><img src="./image/e.png" alt="E 图标"></span>
+              </div>
+              <span class="pay-multiplier">下注积分 x120</span>
+            </div>
+            <div class="paytable-row">
+              <div class="combo-icons" aria-label="三个F图标">
+                <span class="combo-slot"><img src="./image/f.png" alt="F 图标"></span>
+                <span class="combo-slot"><img src="./image/f.png" alt="F 图标"></span>
+                <span class="combo-slot"><img src="./image/f.png" alt="F 图标"></span>
+              </div>
+              <span class="pay-multiplier">下注积分 x200</span>
+            </div>
+            <div class="paytable-row">
+              <div class="combo-icons" aria-label="三个A图标">
+                <span class="combo-slot"><img src="./image/a.png" alt="A 图标"></span>
+                <span class="combo-slot"><img src="./image/a.png" alt="A 图标"></span>
+                <span class="combo-slot"><img src="./image/a.png" alt="A 图标"></span>
+              </div>
+              <span class="pay-multiplier">下注积分 x500</span>
+            </div>
+            <div class="paytable-row">
+              <div class="combo-icons" aria-label="三个G图标">
+                <span class="combo-slot"><img src="./image/g.png" alt="G 图标"></span>
+                <span class="combo-slot"><img src="./image/g.png" alt="G 图标"></span>
+                <span class="combo-slot"><img src="./image/g.png" alt="G 图标"></span>
+              </div>
+              <span class="pay-multiplier">下注积分 x1000</span>
+            </div>
+            <div class="paytable-row">
+              <div class="combo-icons" aria-label="三个H图标">
+                <span class="combo-slot"><img src="./image/h.png" alt="H 图标"></span>
+                <span class="combo-slot"><img src="./image/h.png" alt="H 图标"></span>
+                <span class="combo-slot"><img src="./image/h.png" alt="H 图标"></span>
+              </div>
+              <span class="pay-multiplier">下注积分 x2500</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="info-card">
+          <h2>玩法说明</h2>
+          <ul class="tips-list">
+            <li>初始积分为 50，可自由切换下注 10 或 100 积分。</li>
+            <li>积分不足时会阻止旋转并提示。</li>
+            <li>本页面不保存数据，刷新后会回到初始状态。</li>
+          </ul>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
