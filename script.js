@@ -20,9 +20,34 @@ const winCountEl = document.getElementById("win-count");
 const statusMessageEl = document.getElementById("status-message");
 const spinButton = document.getElementById("spin-button");
 const resetButton = document.getElementById("reset-button");
+const bgmPlayer = document.getElementById("bgm-player");
 const betButtons = Array.from(document.querySelectorAll(".bet-button"));
 const reelStrips = [0, 1, 2].map((index) => document.getElementById(`reel-${index}`));
 const reelWindows = Array.from(document.querySelectorAll(".reel-window"));
+
+function startBackgroundMusic() {
+  if (!bgmPlayer) {
+    return;
+  }
+
+  bgmPlayer.volume = 0.5;
+  const playAttempt = bgmPlayer.play();
+
+  if (playAttempt && typeof playAttempt.catch === "function") {
+    playAttempt.catch(() => {
+      const resumePlayback = () => {
+        bgmPlayer.play().catch(() => {});
+        document.removeEventListener("pointerdown", resumePlayback);
+        document.removeEventListener("touchstart", resumePlayback);
+        document.removeEventListener("keydown", resumePlayback);
+      };
+
+      document.addEventListener("pointerdown", resumePlayback, { once: true });
+      document.addEventListener("touchstart", resumePlayback, { once: true });
+      document.addEventListener("keydown", resumePlayback, { once: true });
+    });
+  }
+}
 
 function randomSymbol() {
   return SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
@@ -270,4 +295,5 @@ window.addEventListener("resize", () => {
   }
 });
 
+startBackgroundMusic();
 resetGame();
