@@ -20,10 +20,14 @@ const winCountEl = document.getElementById("win-count");
 const statusMessageEl = document.getElementById("status-message");
 const spinButton = document.getElementById("spin-button");
 const resetButton = document.getElementById("reset-button");
+const betInput = document.getElementById("bet-input");
 const bgmPlayer = document.getElementById("bgm-player");
-const betButtons = Array.from(document.querySelectorAll(".bet-button"));
+const fireworksCanvas = document.getElementById("fireworks-canvas");
+const fireworksContext = fireworksCanvas ? fireworksCanvas.getContext("2d") : null;
 const reelStrips = [0, 1, 2].map((index) => document.getElementById(`reel-${index}`));
 const reelWindows = Array.from(document.querySelectorAll(".reel-window"));
+let fireworksParticles = [];
+let fireworksAnimationFrame = null;
 
 function startBackgroundMusic() {
   if (!bgmPlayer) {
@@ -101,22 +105,36 @@ function updateStats() {
   winCountEl.textContent = String(state.wins);
 }
 
-function updateBetButtons() {
-  betButtons.forEach((button) => {
-    const bet = Number(button.dataset.bet);
-    button.classList.toggle("is-active", bet === state.currentBet);
-    button.disabled = state.isSpinning;
-  });
+function sanitizeBetInput(rawValue) {
+  const numericValue = Number(rawValue);
+
+  if (!Number.isFinite(numericValue)) {
+    return DEFAULT_BET;
+  }
+
+  const wholeValue = Math.floor(numericValue);
+  if (wholeValue < 1) {
+    return 1;
+  }
+
+  return wholeValue;
+}
+
+function getClampedBet(rawValue) {
+  const sanitizedValue = sanitizeBetInput(rawValue);
+  return Math.min(sanitizedValue, Math.max(state.balance, 1));
 }
 
 function updateActionButtons() {
-  spinButton.disabled = state.isSpinning || state.balance < state.currentBet;
+  spinButton.disabled = state.isSpinning || state.balance < 1;
   resetButton.disabled = state.isSpinning;
+  betInput.disabled = state.isSpinning;
 }
 
 function refreshUI() {
   updateStats();
-  updateBetButtons();
+  betInput.value = String(state.currentBet);
+  betInput.max = String(Math.max(state.balance, 1));
   updateActionButtons();
 }
 
@@ -192,6 +210,87 @@ function getSpinTargets(finalSymbols) {
   });
 }
 
+function resizeFireworksCanvas() {
+  if (!fireworksCanvas) {
+    return;
+  }
+
+  const ratio = window.devicePixelRatio || 1;
+  fireworksCanvas.width = Math.floor(window.innerWidth * ratio);
+  fireworksCanvas.height = Math.floor(window.innerHeight * ratio);
+  fireworksCanvas.style.width = `${window.innerWidth}px`;
+  fireworksCanvas.style.height = `${window.innerHeight}px`;
+
+  if (fireworksContext) {
+    fireworksContext.setTransform(1, 0, 0, 1, 0, 0);
+    fireworksContext.scale(ratio, ratio);
+  }
+}
+
+function animateFireworks() {
+  if (!fireworksContext || !fireworksCanvas) {
+    return;
+  }
+
+  fireworksContext.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  fireworksParticles = fireworksParticles.filter((particle) => particle.life > 0);
+
+  fireworksParticles.forEach((particle) => {
+    particle.x += particle.vx;
+    particle.y += particle.vy;
+    particle.vy += 0.05;
+    particle.life -= 1;
+    particle.alpha = particle.life / particle.maxLife;
+
+    fireworksContext.beginPath();
+    fireworksContext.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+    fireworksContext.fillStyle = `hsla(${particle.hue}, 100%, 65%, ${particle.alpha})`;
+    fireworksContext.fill();
+  });
+
+  if (fireworksParticles.length > 0) {
+    fireworksAnimationFrame = window.requestAnimationFrame(animateFireworks);
+  } else {
+    fireworksAnimationFrame = null;
+    fireworksContext.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  }
+}
+
+function launchFireworks() {
+  if (!fireworksContext) {
+    return;
+  }
+
+  const bursts = 3;
+
+  for (let burstIndex = 0; burstIndex < bursts; burstIndex += 1) {
+    const centerX = window.innerWidth * (0.2 + Math.random() * 0.6);
+    const centerY = window.innerHeight * (0.2 + Math.random() * 0.35);
+    const hue = 20 + Math.random() * 320;
+
+    for (let index = 0; index < 30; index += 1) {
+      const angle = (Math.PI * 2 * index) / 30;
+      const speed = 1.8 + Math.random() * 3.2;
+
+      fireworksParticles.push({
+        x: centerX,
+        y: centerY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        size: 2 + Math.random() * 3,
+        life: 36 + Math.floor(Math.random() * 18),
+        maxLife: 54,
+        alpha: 1,
+        hue
+      });
+    }
+  }
+
+  if (!fireworksAnimationFrame) {
+    fireworksAnimationFrame = window.requestAnimationFrame(animateFireworks);
+  }
+}
+
 function animateReel(strip, targetIndex, duration) {
   return new Promise((resolve) => {
     populateStrip(strip);
@@ -219,9 +318,12 @@ async function spin() {
     return;
   }
 
+  const requestedBet = getClampedBet(betInput.value);
+  state.currentBet = requestedBet;
+
   if (state.balance < state.currentBet) {
-    setStatus(`当前积分不足，无法下注 ${state.currentBet} 积分。请重置或切换下注积分。`, "alert");
-    updateActionButtons();
+    setStatus(`下注积分不能超过当前剩余积分 ${state.balance}。`, "alert");
+    refreshUI();
     return;
   }
 
@@ -245,14 +347,22 @@ async function spin() {
 
   if (reward) {
     state.balance += reward.amount;
-    state.wins += 1;
-    highlightReels(true);
-    setStatus(`恭喜你获得 ${reward.amount} 积分`, "win");
+    if (reward.amount > 0) {
+      state.wins += 1;
+      highlightReels(true);
+      setStatus(`恭喜你获得 ${reward.amount} 积分`, "win");
+      launchFireworks();
+    } else {
+      setStatus("就差一点点");
+    }
   } else {
     setStatus("就差一点点");
   }
 
   state.isSpinning = false;
+  if (state.balance < 1) {
+    setStatus("啊哦，积分用完了。", "alert");
+  }
   refreshUI();
 }
 
@@ -266,34 +376,39 @@ function resetGame() {
 
   syncReelsToCurrentSymbols();
   highlightReels(false);
-  setStatus("游戏已重置，选择下注积分后点击“开始旋转”开始游戏。");
+  setStatus("输入下注积分后点击“开始旋转”开始游戏。");
   refreshUI();
 }
 
-betButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    if (state.isSpinning) {
-      return;
-    }
+betInput.addEventListener("input", () => {
+  if (state.isSpinning) {
+    return;
+  }
 
-    state.currentBet = Number(button.dataset.bet);
-    refreshUI();
+  const requestedBet = sanitizeBetInput(betInput.value);
+  const clampedBet = Math.min(requestedBet, Math.max(state.balance, 1));
+  state.currentBet = clampedBet;
+  if (String(clampedBet) !== betInput.value) {
+    betInput.value = String(clampedBet);
+  }
+  refreshUI();
 
-    if (state.balance < state.currentBet) {
-      setStatus(`当前积分不足以进行 ${state.currentBet} 积分的下注。`, "alert");
-    } else {
-      setStatus(`已切换到下注 ${state.currentBet} 积分。点击“开始旋转”开始游戏。`);
-    }
-  });
+  if (requestedBet > state.balance) {
+    setStatus(`下注积分不能超过当前剩余积分 ${state.balance}。`, "alert");
+  } else {
+    setStatus(`已设置本轮下注 ${state.currentBet} 积分。点击“开始旋转”开始游戏。`);
+  }
 });
 
 spinButton.addEventListener("click", spin);
 resetButton.addEventListener("click", resetGame);
 window.addEventListener("resize", () => {
+  resizeFireworksCanvas();
   if (!state.isSpinning) {
     syncReelsToCurrentSymbols();
   }
 });
 
+resizeFireworksCanvas();
 startBackgroundMusic();
 resetGame();

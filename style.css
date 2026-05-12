@@ -37,6 +37,15 @@ body {
   min-height: 100vh;
 }
 
+#fireworks-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 20;
+}
+
 .app-shell {
   min-height: 100vh;
   padding: 24px;
@@ -226,32 +235,37 @@ h1 {
   flex-wrap: wrap;
 }
 
+.bet-controls {
+  flex: 1 1 260px;
+}
+
 button {
   border: 0;
   cursor: pointer;
   font: inherit;
 }
 
-.bet-button,
+.bet-input-card,
 .action-button {
   min-height: 52px;
-  padding: 0 22px;
-  border-radius: 999px;
   transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease, background 180ms ease;
 }
 
-.bet-button {
+.bet-input-card {
+  width: min(320px, 100%);
+  display: grid;
+  gap: 8px;
+  padding: 14px 18px;
+  border-radius: 22px;
   color: var(--text);
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.bet-button.is-active {
-  background: linear-gradient(135deg, rgba(255, 191, 71, 0.24), rgba(255, 122, 24, 0.32));
-  box-shadow: 0 10px 24px rgba(255, 122, 24, 0.28);
+  box-shadow: 0 10px 24px rgba(8, 12, 28, 0.2);
 }
 
 .action-button {
+  padding: 0 22px;
+  border-radius: 999px;
   font-weight: 700;
   color: #190f03;
 }
@@ -274,6 +288,42 @@ button:hover:not(:disabled) {
 button:disabled {
   opacity: 0.58;
   cursor: not-allowed;
+}
+
+.bet-input-card:focus-within {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(255, 191, 71, 0.18);
+  border-color: rgba(255, 191, 71, 0.35);
+}
+
+.bet-input-label {
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.bet-input {
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  outline: none;
+  border-radius: 16px;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: rgba(7, 11, 23, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.bet-input::-webkit-outer-spin-button,
+.bet-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.bet-input[type="number"] {
+  -moz-appearance: textfield;
 }
 
 .status-banner {
@@ -431,7 +481,7 @@ button:disabled {
     width: 100%;
   }
 
-  .bet-button,
+  .bet-input-card,
   .action-button {
     flex: 1 1 0;
     min-width: 0;

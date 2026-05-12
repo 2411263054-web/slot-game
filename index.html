@@ -8,6 +8,7 @@
 </head>
 <body>
   <audio id="bgm-player" src="./bgm.mp3" loop preload="auto" autoplay></audio>
+  <canvas id="fireworks-canvas" aria-hidden="true"></canvas>
   <div class="app-shell">
     <main class="game-layout">
       <section class="machine-panel">
@@ -56,9 +57,11 @@
         </div>
 
         <div class="controls-panel">
-          <div class="bet-controls" role="group" aria-label="选择下注积分">
-            <button type="button" class="bet-button is-active" data-bet="10">下注 10 积分</button>
-            <button type="button" class="bet-button" data-bet="100">下注 100 积分</button>
+          <div class="bet-controls">
+            <label class="bet-input-card" for="bet-input">
+              <span class="bet-input-label">输入下注积分</span>
+              <input id="bet-input" class="bet-input" type="number" min="1" step="1" inputmode="numeric" value="10">
+            </label>
           </div>
 
           <div class="action-controls">
@@ -162,8 +165,8 @@
         <section class="info-card">
           <h2>玩法说明</h2>
           <ul class="tips-list">
-            <li>初始积分为 50，可自由切换下注 10 或 100 积分。</li>
-            <li>积分不足时会阻止旋转并提示。</li>
+            <li>初始积分为 50，可自由输入本轮想下注的积分。</li>
+            <li>输入值必须大于 0，且不能超过当前剩余积分。</li>
             <li>本页面不保存数据，刷新后会回到初始状态。</li>
           </ul>
         </section>
