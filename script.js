@@ -105,36 +105,41 @@ function updateStats() {
   winCountEl.textContent = String(state.wins);
 }
 
-function sanitizeBetInput(rawValue) {
+function parseBetInput(rawValue) {
+  if (typeof rawValue !== "string" || rawValue.trim() === "") {
+    return null;
+  }
+
   const numericValue = Number(rawValue);
 
   if (!Number.isFinite(numericValue)) {
-    return DEFAULT_BET;
+    return null;
   }
 
   const wholeValue = Math.floor(numericValue);
   if (wholeValue < 1) {
-    return 1;
+    return null;
   }
 
   return wholeValue;
 }
 
-function getClampedBet(rawValue) {
-  const sanitizedValue = sanitizeBetInput(rawValue);
-  return Math.min(sanitizedValue, Math.max(state.balance, 1));
-}
-
 function updateActionButtons() {
-  spinButton.disabled = state.isSpinning || state.balance < 1;
+  spinButton.disabled =
+    state.isSpinning ||
+    state.balance < 1 ||
+    state.currentBet < 1 ||
+    state.currentBet > state.balance;
   resetButton.disabled = state.isSpinning;
   betInput.disabled = state.isSpinning;
 }
 
-function refreshUI() {
+function refreshUI(syncBetInput = false) {
   updateStats();
-  betInput.value = String(state.currentBet);
   betInput.max = String(Math.max(state.balance, 1));
+  if (syncBetInput) {
+    betInput.value = state.currentBet > 0 ? String(state.currentBet) : "";
+  }
   updateActionButtons();
 }
 
@@ -318,7 +323,14 @@ async function spin() {
     return;
   }
 
-  const requestedBet = getClampedBet(betInput.value);
+  const requestedBet = parseBetInput(betInput.value);
+  if (requestedBet === null) {
+    state.currentBet = 0;
+    setStatus("请输入大于 0 的下注积分。", "alert");
+    refreshUI();
+    return;
+  }
+
   state.currentBet = requestedBet;
 
   if (state.balance < state.currentBet) {
@@ -377,7 +389,7 @@ function resetGame() {
   syncReelsToCurrentSymbols();
   highlightReels(false);
   setStatus("输入下注积分后点击“开始旋转”开始游戏。");
-  refreshUI();
+  refreshUI(true);
 }
 
 betInput.addEventListener("input", () => {
@@ -385,15 +397,13 @@ betInput.addEventListener("input", () => {
     return;
   }
 
-  const requestedBet = sanitizeBetInput(betInput.value);
-  const clampedBet = Math.min(requestedBet, Math.max(state.balance, 1));
-  state.currentBet = clampedBet;
-  if (String(clampedBet) !== betInput.value) {
-    betInput.value = String(clampedBet);
-  }
+  const requestedBet = parseBetInput(betInput.value);
+  state.currentBet = requestedBet ?? 0;
   refreshUI();
 
-  if (requestedBet > state.balance) {
+  if (requestedBet === null) {
+    setStatus("请输入大于 0 的下注积分。", "alert");
+  } else if (requestedBet > state.balance) {
     setStatus(`下注积分不能超过当前剩余积分 ${state.balance}。`, "alert");
   } else {
     setStatus(`已设置本轮下注 ${state.currentBet} 积分。点击“开始旋转”开始游戏。`);
